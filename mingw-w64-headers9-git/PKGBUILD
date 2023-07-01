@@ -69,8 +69,8 @@ build() {
   echo ""
 
   msg "Configuring ${MINGW_CHOST} headers"
-  [[ -d ${srcdir}/headers-${MINGW_CHOST} ]] && rm -rf ${srcdir}/headers-${MINGW_CHOST}
-  mkdir -p ${srcdir}/headers-${MINGW_CHOST} && cd ${srcdir}/headers-${MINGW_CHOST}
+  [[ -d ${srcdir}/headers-${MSYSTEM} ]] && rm -rf ${srcdir}/headers-${MSYSTEM}
+  mkdir -p ${srcdir}/headers-${MSYSTEM} && cd ${srcdir}/headers-${MSYSTEM}
   ${srcdir}/mingw-w64/mingw-w64-headers/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
@@ -85,7 +85,7 @@ build() {
 
 package() {
   msg "Installing ${MINGW_CHOST} headers"
-  cd ${srcdir}/headers-${MINGW_CHOST}
+  cd ${srcdir}/headers-${MSYSTEM}
   make DESTDIR=${pkgdir} install
 
   rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_signal.h
