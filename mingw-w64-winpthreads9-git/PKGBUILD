@@ -11,7 +11,12 @@ pkgbase=mingw-w64-${_realname}-git
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git" "${MINGW_PACKAGE_PREFIX}-libwinpthread-git")
 pkgver=9.0.0.r32.gae63cde27
 pkgrel=1
-_commit='ae63cde274dc1d25756df7e730eeb3af01cac687'
+#_commit='9b098a62730d53e53613206c460ba46f0f59f53a' # 9.0.0.r253.g9b098a627
+#_commit='b4445ee520dd5041b051fb30ffee00970f50a118' # 9.0.0.r240.gb4445ee52
+#_commit='ed3f52d9f5d68220294ab841d04ecfaadf6d3d4b' #
+_commit='ae63cde274dc1d25756df7e730eeb3af01cac687' # 9.0.0.r32.gae63cde27 # Builds with GCC 11
+#_commit='38c9f0318c6509110706afdc52adc12d8cc34ead' # 9.0.0.r28.g38c9f0318 # Builds with GCC 11
+#_commit='acc9b9d9eb63a13d8122cbac4882eb5f4ee2f679' # 9.0.0.r0.gacc9b9d9e # Builds with GCC 11
 pkgdesc="MinGW-w64 winpthreads library"
 url="https://mingw-w64.sourceforge.io/"
 # The main license of `winpthreads' is MIT, but parts of this library are
@@ -50,6 +55,12 @@ prepare() {
 build() {
   [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
   mkdir -p "${srcdir}"/build-${MINGW_CHOST} && cd ${srcdir}/build-${MINGW_CHOST}
+
+  # Replace the MSys2 default FLAG values
+  export LDFLAGS="-pipe"
+  export CPPFLAGS=""
+  export CFLAGS="-pipe"
+  export CXXFLAGS="-pipe"
 
   declare -a extra_config
   # https://github.com/msys2/MINGW-packages/issues/7043
