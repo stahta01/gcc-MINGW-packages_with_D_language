@@ -74,8 +74,8 @@ build() {
   ${CC-gcc} --version | head -1
   echo ""
 
-  [[ -d ${srcdir}/crt-${MINGW_CHOST} ]] && rm -rf ${srcdir}/crt-${MINGW_CHOST}
-  mkdir -p ${srcdir}/crt-${MINGW_CHOST} && cd ${srcdir}/crt-${MINGW_CHOST}
+  [[ -d ${srcdir}/crt-${MSYSTEM} ]] && rm -rf ${srcdir}/crt-${MSYSTEM}
+  mkdir -p ${srcdir}/crt-${MSYSTEM} && cd ${srcdir}/crt-${MSYSTEM}
   ${srcdir}/mingw-w64/mingw-w64-crt/configure \
     --prefix=${MINGW_PREFIX}${_include_sub_folder} \
     --build=${MINGW_CHOST} \
@@ -90,7 +90,7 @@ build() {
 
 package() {
   msg "Installing ${MINGW_CHOST} crt"
-  cd ${srcdir}/crt-${MINGW_CHOST}
+  cd ${srcdir}/crt-${MSYSTEM}
   make DESTDIR=${pkgdir} install-strip
 
   msg "Installing MinGW-w64 licenses"
