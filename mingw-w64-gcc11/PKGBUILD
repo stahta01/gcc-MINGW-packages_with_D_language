@@ -7,13 +7,14 @@
 # Contributor: Kirill Müller <krlmlr@mailbox.org>
 
 ### Major build options
+_include_sub_folder=       #/${MINGW_CHOST}
 _enable_bootstrap=no    # Use yes for production
 ### Language build options
 _enable_ada=no
 _enable_objc=no
 _enable_jit=no
-_enable_d=no            # Use yes for production
-_enable_fortran=no      # Use yes for production
+_enable_d=no             # Yes fails to work correctly
+_enable_fortran=no
 ### build options not normally changed
 _threads="posix"         # Use posix for production
 _enable_libquadmath=no   # Use no for production
@@ -162,15 +163,6 @@ prepare() {
   # Related bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95130
   apply_patch_with_msg \
     0300-override-builtin-printf-format.patch
-
-  # do not expect ${prefix}/mingw symlink - this should be superceded by
-  # 0005-Windows-Don-t-ignore-native-system-header-dir.patch .. but isn't!
-  sed -i 's/${prefix}\/mingw\//${prefix}\//g' configure
-
-  # change hardcoded /mingw prefix to the real prefix .. isn't this rubbish?
-  # it might work at build time and could be important there but beyond that?!
-  local MINGW_NATIVE_PREFIX=$(cygpath -am ${MINGW_PREFIX})
-  sed -i "s#\\/mingw\\/#${MINGW_NATIVE_PREFIX//\//\\/}\\/#g" gcc/config/i386/mingw32.h
 }
 
 build() {
@@ -180,8 +172,25 @@ build() {
   export CFLAGS="-pipe"
   export CXXFLAGS="-pipe"
 
-  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
-  mkdir -p ${srcdir}/build-${MINGW_CHOST} && cd ${srcdir}/build-${MINGW_CHOST}
+  cd ${srcdir}/${_sourcedir}
+
+  # do not expect ${prefix}/mingw symlink - this should be superceded by
+  # 0005-Windows-Don-t-ignore-native-system-header-dir.patch .. but isn't!
+  if [ -f configure.sedbak ]; then
+    cp configure.sedbak configure
+  fi
+  sed --in-place=.sedbak 's/${prefix}\/mingw\//${prefix}\//g' configure
+
+  # change hardcoded /mingw prefix to the real prefix .. isn't this rubbish?
+  # it might work at build time and could be important there but beyond that?!
+  local MINGW_NATIVE_PREFIX=$(cygpath -am ${MINGW_PREFIX}${_include_sub_folder})
+  if [ -f gcc/config/i386/mingw32.h.sedbak ]; then
+    cp gcc/config/i386/mingw32.h.sedbak gcc/config/i386/mingw32.h
+  fi
+  sed --in-place=.sedbak "s#\\/mingw\\/#${MINGW_NATIVE_PREFIX//\//\\/}\\/#g" gcc/config/i386/mingw32.h
+
+  [[ -d ${srcdir}/build-${MSYSTEM} ]] && rm -rf ${srcdir}/build-${MSYSTEM}
+  mkdir -p ${srcdir}/build-${MSYSTEM} && cd ${srcdir}/build-${MSYSTEM}
 
   declare -a extra_config
   if check_option "debug" "n"; then
@@ -199,6 +208,9 @@ build() {
   if [[ "$_enable_libquadmath" != "yes" ]]; then
     extra_config+=('--disable-libquadmath')
   fi
+  #if [ "$_enable_d" == "yes" ]; then
+    #extra_config+=('--enable-libphobos') # Does not build has pthread related ?linking? errors
+  #fi
 
   case "${CARCH}" in
     i686)
@@ -252,6 +264,7 @@ build() {
   echo "CC [gcc] := ${CC-gcc}"
   ${CC-gcc} --version | head -1
   ${CC-gcc} --help | tail -1
+  pacman -Q ${MINGW_PACKAGE_PREFIX}-headers
   pacman -Q ${MINGW_PACKAGE_PREFIX}-crt
   echo ""
 
@@ -261,7 +274,7 @@ build() {
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST} \
-    --with-native-system-header-dir=${MINGW_PREFIX}/include \
+    --with-native-system-header-dir=${MINGW_PREFIX}${_include_sub_folder}/include \
     --libexecdir=${MINGW_PREFIX}/lib \
     --enable-checking=no \
     --with-arch=${_arch} \
@@ -300,7 +313,7 @@ build() {
     sed -i 's,^STRIP_FOR_TARGET=.*$,STRIP_FOR_TARGET=true,g' Makefile
   fi
 
-  make all || make all V=1 -j1
+  make all # -j1 # || make all V=1 -j1
 
   rm -rf ${srcdir}${MINGW_PREFIX}
 
@@ -529,6 +542,19 @@ package_gcc-objc() {
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/cc1obj.exe         ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/cc1objplus.exe     ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
   cp lib/libobjc.*                                       ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
+}
+
+package_gcc-d() {
+  pkgdesc="GNU Compiler Collection (D Frontend) for MinGW-w64"
+  depends=("${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver}-${pkgrel}")
+
+  cd ${srcdir}${MINGW_PREFIX}
+
+  mkdir -p ${pkgdir}${MINGW_PREFIX}/bin
+  cp bin/gdc.exe                                              ${pkgdir}${MINGW_PREFIX}/bin/
+
+  mkdir -p ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}
+  cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
 }
 
 package_libgccjit() {
