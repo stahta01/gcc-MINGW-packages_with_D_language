@@ -9,17 +9,25 @@
 ### Major build options
 _include_sub_folder=       #/${MINGW_CHOST}
 _enable_bootstrap=no    # Use yes for production
+_enable_threads=yes      # Use yes for production
+_threads="win32"         # Use posix for production
+options=('staticlibs' '!emptydirs' '!strip' 'debug')
 ### Language build options
-_enable_ada=no
-_enable_objc=no
-_enable_jit=no
-_enable_d=no             # Yes fails to work correctly
-_enable_fortran=no
+_enable_ada=yes          # Use yes for production
+_enable_d=yes            # Use yes for production
+_enable_fortran=no       # Use no for production
+_enable_jit=no           # Use no for production
+_enable_objc=no          # Use no for production
 ### build options not normally changed
-_threads="posix"         # Use posix for production
 _enable_libquadmath=no   # Use no for production
+_enable_libgomp=yes
+_enable_libatomic=yes
 #
 # =========================================== #
+if [[ "$_enable_threads" != "yes" || "$_threads" != "posix" ]]; then
+  _enable_libgomp=no
+  _enable_libatomic=no
+fi
 if [[ "$_enable_fortran" == "yes" && "$_enable_libquadmath" != "yes" ]]; then
    warning "when building FORTRAN; libquadmath is enabled"
   _enable_libquadmath=yes
@@ -37,10 +45,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit")
         )
-#_snapshot=20181214
 pkgver=11.4.0
-#_majorver=${pkgver:0:1}
-#_sourcedir=${_realname}-${_majorver}-${_snapshot}
 _sourcedir=${_realname}-${pkgver}
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
@@ -64,9 +69,7 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-${_realname}"
              "${MINGW_PACKAGE_PREFIX}-zlib"
              "${MINGW_PACKAGE_PREFIX}-zstd"
              "${MINGW_PACKAGE_PREFIX}-autotools")
-options=('staticlibs' '!emptydirs') # '!strip' 'debug')
 source=("https://ftp.gnu.org/gnu/gcc/${_realname}-${pkgver%%+*}/${_realname}-${pkgver}.tar.xz"{,.sig}
-        #https://www.mirrorservice.org/sites/sourceware.org/pub/gcc/snapshots/${_majorver}-${_snapshot}/gcc-${_majorver}-${_snapshot}.tar.xz
         "gdbinit"
         0002-Relocate-libintl.patch
         0003-Windows-Follow-Posix-dir-exists-semantics-more-close.patch
@@ -208,22 +211,37 @@ build() {
   if [[ "$_enable_libquadmath" != "yes" ]]; then
     extra_config+=('--disable-libquadmath')
   fi
-  #if [ "$_enable_d" == "yes" ]; then
-    #extra_config+=('--enable-libphobos') # Does not build has pthread related ?linking? errors
-  #fi
+  #
+  if [[ "$_enable_threads" == "yes" && "$_threads" == "posix" ]]; then
+    extra_config+=("--enable-threads=posix")
+  elif [[ "$_enable_threads" == "yes" && "$_threads" == "win32" ]]; then
+    extra_config+=("--enable-threads=win32")
+  else
+    extra_config+=("--enable-threads=single")
+  fi
+  #
+  if [ "$_enable_libgomp" == "yes" ]; then
+    extra_config+=("--enable-libgomp")
+  elif [ "$_enable_libgomp" == "no" ]; then
+    extra_config+=("--disable-libgomp")
+  fi
+  #
+  if [[ "$_enable_libatomic" != "yes" ]]; then
+    extra_config+=('--disable-libatomic')
+  else
+    extra_config+=('--enable-libatomic')
+  fi
 
   case "${CARCH}" in
     i686)
-      extra_config+=(
-        "--disable-sjlj-exceptions"
-        "--with-dwarf2"
-      )
+      extra_config+=("--disable-sjlj-exceptions")
+      extra_config+=("--with-dwarf2")
+      extra_config+=("--with-arch=i686")
       LDFLAGS+=" -Wl,--large-address-aware"
-      local _arch=i686
     ;;
 
     x86_64)
-      local _arch=x86-64
+      extra_config+=("--with-arch=x86-64")
     ;;
   esac
 
@@ -233,6 +251,8 @@ build() {
   fi
   if [ "$_enable_d" == "yes" ]; then
     _languages+=",d"
+    extra_config+=('--enable-libphobos')
+    extra_config+=('--with-libphobos-druntime-only=yes')
   fi
   if [ "$_enable_fortran" == "yes" ]; then
     _languages+=",fortran"
@@ -277,19 +297,15 @@ build() {
     --with-native-system-header-dir=${MINGW_PREFIX}${_include_sub_folder}/include \
     --libexecdir=${MINGW_PREFIX}/lib \
     --enable-checking=no \
-    --with-arch=${_arch} \
     --with-tune=generic \
     --enable-languages=${_languages} \
     --enable-shared --enable-static \
-    --enable-libatomic \
-    --enable-threads=${_threads} \
     --enable-graphite \
     --enable-fully-dynamic-string \
     --enable-libstdcxx-filesystem-ts \
     --enable-libstdcxx-time \
     --disable-libstdcxx-pch \
     --enable-lto \
-    --enable-libgomp \
     --disable-multilib \
     --disable-rpath \
     --disable-win32-registry \
@@ -354,9 +370,15 @@ ENDFILE
 
   cd ${srcdir}${MINGW_PREFIX}
   # libitm* and libvtv* are disbled until fixed
-  cp bin/{libatomic*,libgcc*,libgomp*,libstdc*}.dll ${pkgdir}${MINGW_PREFIX}/bin/
+  cp bin/{libgcc*,libstdc*}.dll ${pkgdir}${MINGW_PREFIX}/bin/
   if [[ "$_enable_libquadmath" == "yes" ]]; then
     cp bin/libquadmath*.dll ${pkgdir}${MINGW_PREFIX}/bin/
+  fi
+  if [[ "$_enable_libgomp" == "yes" ]]; then
+    cp bin/libgomp*.dll ${pkgdir}${MINGW_PREFIX}/bin/
+  fi
+  if [[ "$_enable_libatomic" == "yes" ]]; then
+    cp bin/libatomic*.dll ${pkgdir}${MINGW_PREFIX}/bin/
   fi
   if [ "$_enable_jit" == "yes" ]; then
     rm ${pkgdir}${MINGW_PREFIX}/bin/libgccjit-0.dll
@@ -416,11 +438,15 @@ package_gcc() {
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/cc1plus.exe        ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/g++-mapper-server.exe ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
 
-  cp lib/libatomic*                                      ${pkgdir}${MINGW_PREFIX}/lib/
+  if [[ "$_enable_libatomic" == "yes" ]]; then
+    cp lib/libatomic*                                     ${pkgdir}${MINGW_PREFIX}/lib/
+  fi
   cp lib/libgcc_*                                         ${pkgdir}${MINGW_PREFIX}/lib/
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/libgcc*            ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
 
-  cp lib/libgomp*                                        ${pkgdir}${MINGW_PREFIX}/lib/
+  if [[ "$_enable_libgomp" == "yes" ]]; then
+    cp lib/libgomp*                                      ${pkgdir}${MINGW_PREFIX}/lib/
+  fi
   # cp lib/libitm*                                         ${pkgdir}${MINGW_PREFIX}/lib/
   if [[ "$_enable_libquadmath" == "yes" ]]; then
     cp lib/libquadmath*                                  ${pkgdir}${MINGW_PREFIX}/lib/
@@ -447,7 +473,9 @@ package_gcc() {
   cp share/info/gccinstall.info*                         ${pkgdir}${MINGW_PREFIX}/share/info/
   cp share/info/gccint.info*                             ${pkgdir}${MINGW_PREFIX}/share/info/
   # cp share/info/libitm.info*                             ${pkgdir}${MINGW_PREFIX}/share/info/
-  cp share/info/libgomp.info*                            ${pkgdir}${MINGW_PREFIX}/share/info/
+  if [[ "$_enable_libgomp" == "yes" ]]; then
+    cp share/info/libgomp.info*                          ${pkgdir}${MINGW_PREFIX}/share/info/
+  fi
   if [[ "$_enable_libquadmath" == "yes" ]]; then
     cp share/info/libquadmath.info*                      ${pkgdir}${MINGW_PREFIX}/share/info/
   fi
@@ -553,8 +581,11 @@ package_gcc-d() {
   mkdir -p ${pkgdir}${MINGW_PREFIX}/bin
   cp bin/gdc.exe                                              ${pkgdir}${MINGW_PREFIX}/bin/
 
-  mkdir -p ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}
+  mkdir -p ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d
+  cp lib/{libgphobos*,libgdruntime*}.a                        ${pkgdir}${MINGW_PREFIX}/lib/
+  cp lib/libgphobos.spec                                      ${pkgdir}${MINGW_PREFIX}/lib/
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
+  cp -r lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d        ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/
 }
 
 package_libgccjit() {
