@@ -612,7 +612,11 @@ package_gcc-d-git() {
   mkdir -p ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d
   cp lib/{libgphobos*,libgdruntime*}.a                        ${pkgdir}${MINGW_PREFIX}/lib/
   cp lib/libgphobos.spec                                      ${pkgdir}${MINGW_PREFIX}/lib/
+  if [[ "$MSYSTEM" == "MINGW32" ]]; then
+    cp lib/drt*.o                                             ${pkgdir}${MINGW_PREFIX}/lib/
+  fi
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
+  cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/bin/
   cp -r lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d        ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/
 }
 
