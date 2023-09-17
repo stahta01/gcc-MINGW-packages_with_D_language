@@ -45,7 +45,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc-git")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit-git")
         )
-pkgver=11.4.1+d20230913.r0.c0.g3e571ae6a801
+pkgver=11.4.1+d20230916.r0.c0.g76bc8b30516d
 _sourcedir=${_realname}-git
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
@@ -266,7 +266,7 @@ build() {
   if [ "$_enable_d" == "yes" ]; then
     _languages+=",d"
     extra_config+=('--enable-libphobos')
-    extra_config+=('--with-libphobos-druntime-only=yes')
+    #extra_config+=('--with-libphobos-druntime-only=yes')
   fi
   if [ "$_enable_fortran" == "yes" ]; then
     _languages+=",fortran"
