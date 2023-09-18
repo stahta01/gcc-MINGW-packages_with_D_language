@@ -12,6 +12,7 @@ _enable_bootstrap=no    # Use yes for production
 _enable_threads=yes      # Use yes for production
 _threads="win32"         # Use posix for production
 options=('staticlibs' '!emptydirs' '!strip' 'debug')
+_BUGURL='https://github.com/stahta01/gcc-MINGW-packages_with_D_language/issues'
 ### Language build options
 _enable_ada=yes          # Use yes for production
 _enable_d=yes            # Use yes for production
@@ -330,8 +331,8 @@ build() {
     --with-libiconv \
     --with-system-zlib \
     --with-{gmp,mpfr,mpc,isl}=${MINGW_PREFIX} \
-    --with-pkgversion="Rev${pkgrel} ${MSYSTEM}, Built by older-gcc-MINGW-packages project" \
-    --with-bugurl="https://github.com/stahta01/older-gcc-MINGW-packages/issues" \
+    --with-pkgversion="Rev${pkgrel} ${MSYSTEM}, Built by stahta01" \
+    --with-bugurl="$_BUGURL" \
     --with-gnu-as \
     --with-gnu-ld \
     "${extra_config[@]}"
