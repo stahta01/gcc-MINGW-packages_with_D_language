@@ -1,7 +1,7 @@
 mkdir -p packages/gcc11.4.1_toolchain_mingw_64_packages
 
-_gcc_date_code='20230918'
-_gcc_short_commit='76eec62033ef'
+_gcc_date_code='20230919'
+_gcc_short_commit='13795adbe1f8'
 
 rm -f ./packages/gcc11.4.1_toolchain_mingw_64_packages/*.zst
 cp -f ./mingw-w64-headers9-git/mingw-w64-x86_64-headers-git-9.0.0.r32.gae63cde27-1-any.pkg.tar.zst ./packages/gcc11.4.1_toolchain_mingw_64_packages/
