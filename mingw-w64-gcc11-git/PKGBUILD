@@ -11,7 +11,7 @@ _include_sub_folder=       #/${MINGW_CHOST}
 _enable_bootstrap=no    # Use yes for production
 _enable_threads=yes      # Use yes for production
 _threads="win32"         # Use posix for production
-options=('staticlibs' '!emptydirs' '!strip' 'debug')
+options=('staticlibs' '!emptydirs') # '!strip' 'debug')
 _BUGURL='https://github.com/stahta01/gcc-MINGW-packages_with_D_language/issues'
 ### Language build options
 _enable_ada=yes          # Use yes for production
@@ -46,7 +46,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc-git")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit-git")
         )
-pkgver=11.4.1+d20230918.r0.c0.g76eec62033ef
+pkgver=11.4.1+d20230919.r0.c0.g13795adbe1f8
 _sourcedir=${_realname}-git
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
@@ -544,8 +544,6 @@ package_gcc-fortran-git() {
   cp bin/gfortran.exe ${pkgdir}${MINGW_PREFIX}/bin/
   cp bin/${MINGW_CHOST}-gfortran.exe ${pkgdir}${MINGW_PREFIX}/bin/
 
-  #cp bin/libgfortran*.dll ${pkgdir}${MINGW_PREFIX}/bin/
-
   mkdir -p ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}
   cp -r lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/finclude       ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/f951.exe          ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
@@ -617,7 +615,6 @@ package_gcc-d-git() {
     cp lib/drt*.o                                             ${pkgdir}${MINGW_PREFIX}/lib/
   fi
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
-  #cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/bin/
   cp -r lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d        ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/
 }
 
