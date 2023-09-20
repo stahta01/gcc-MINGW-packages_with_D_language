@@ -105,7 +105,8 @@ _install_licenses() {
 
 package_winpthreads-git() {
   depends=("${MINGW_PACKAGE_PREFIX}-crt-git" "${MINGW_PACKAGE_PREFIX}-libwinpthread-git=${pkgver}")
-  provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+  provides=("${MINGW_PACKAGE_PREFIX}-${_realname}"
+            "${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver%%.*}")
   conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 
   cd ${srcdir}/build-${MSYSTEM}
@@ -120,7 +121,8 @@ package_winpthreads-git() {
 }
 
 package_libwinpthread-git() {
-  provides=("${MINGW_PACKAGE_PREFIX}-libwinpthread")
+  provides=("${MINGW_PACKAGE_PREFIX}-libwinpthread"
+            "${MINGW_PACKAGE_PREFIX}-libwinpthread=${pkgver%%.*}")
   conflicts=("${MINGW_PACKAGE_PREFIX}-libwinpthread")
 
   cd ${srcdir}/build-${MSYSTEM}
