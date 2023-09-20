@@ -34,7 +34,8 @@ depends=("${MINGW_PACKAGE_PREFIX}-headers-git")
 makedepends=("git"
              "${MINGW_PACKAGE_PREFIX}-gcc"
              "${MINGW_PACKAGE_PREFIX}-binutils")
-provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+provides=("${MINGW_PACKAGE_PREFIX}-${_realname}"
+          "${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver%%.*}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 options=('!strip' 'staticlibs' '!buildflags' '!emptydirs')
 source=("mingw-w64"::"git+https://git.code.sf.net/p/mingw-w64/mingw-w64#commit=$_commit"
