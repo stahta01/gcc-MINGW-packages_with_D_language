@@ -89,9 +89,9 @@ package() {
   cd ${srcdir}/headers-${MSYSTEM}
   make DESTDIR=${pkgdir} install
 
-  rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_signal.h
-  rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_time.h
-  rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_unistd.h
+  #rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_signal.h
+  #rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_time.h
+  #rm ${pkgdir}${MINGW_PREFIX}${_include_sub_folder}/include/pthread_unistd.h
 
   msg "Installing MinGW-w64 licenses"
   install -Dm644 ${srcdir}/mingw-w64/mingw-w64-headers/ddk/readme.txt ${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/ddk-readme.txt
