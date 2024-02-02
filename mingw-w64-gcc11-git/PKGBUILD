@@ -1,18 +1,23 @@
-# Maintainer:  Tim Stahlhut <stahta01@gmail.com>
-# Contributor: Alexey Pavlov <alexpux@gmail.com>
-# Contributor: Alexey Borzenkov <snaury@gmail.com>
-# Contributor: Ray Donnelly <mingw.android@gmail.com>
-# Contributor: Renato Silva <br.renatosilva@gmail.com>
-# Contributor: wirx6 <wirx654@gmail.com>
-# Contributor: Kirill Müller <krlmlr@mailbox.org>
+####
+# Based partly on https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-gcc,
+# https://github.com/stahta01/older-gcc-MINGW-packages/tree/main/mingw-w64-gcc11-git, and
+# https://github.com/stahta01/MINGW-mcfg-threads-PACKAGES/tree/main/mingw-w64-gcc
+####
+# Maintainer:  Tim Stahlhut
+# Contributor: Alexey Pavlov
+# Contributor: Alexey Borzenkov
+# Contributor: Ray Donnelly
+# Contributor: Renato Silva
+# Contributor: wirx6
+# Contributor: Kirill Müller
 
 ### Major build options
 _include_sub_folder=       #/${MINGW_CHOST}
 _enable_bootstrap=no    # Use yes for production
 _enable_threads=yes      # Use yes for production
-_threads="win32"         # Use posix for production
 options=('staticlibs' '!emptydirs') # '!strip' 'debug')
 _BUGURL='https://github.com/stahta01/gcc-MINGW-packages_with_D_language/issues'
+_BUILTBY="stahta01"
 ### Language build options
 _enable_ada=yes          # Use yes for production
 _enable_d=yes            # Use yes for production
@@ -20,6 +25,7 @@ _enable_fortran=no       # Use no for production
 _enable_jit=no           # Use no for production
 _enable_objc=no          # Use no for production
 ### build options not normally changed
+_threads="win32"
 _enable_libquadmath=no   # Use no for production
 _enable_libgomp=yes
 _enable_libatomic=yes
@@ -46,7 +52,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc-git")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit-git")
         )
-pkgver=11.4.1+d20230919.r0.c0.g13795adbe1f8
+pkgver=11.4.1+d20240129.r0.c0.gcdbc0b39e895
 _sourcedir=${_realname}-git
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
@@ -66,7 +72,6 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-${_realname}"
              "${MINGW_PACKAGE_PREFIX}-mpc"
              "${MINGW_PACKAGE_PREFIX}-mpfr"
              "${MINGW_PACKAGE_PREFIX}-windows-default-manifest"
-             "${MINGW_PACKAGE_PREFIX}-winpthreads"
              "${MINGW_PACKAGE_PREFIX}-zlib"
              "${MINGW_PACKAGE_PREFIX}-zstd"
              "${MINGW_PACKAGE_PREFIX}-autotools")
@@ -150,8 +155,13 @@ prepare() {
   _git_base_commit=$(git rev-parse HEAD)
   GIT_AM="git am --committer-date-is-author-date"
 
+  msg "Before git restore"
+  time git restore .
+  msg "Before git clean"
+  time git clean -fdx
+
   del_file_exists intl/canonicalize.c intl/canonicalize.h \
-    intl/relocatex.c intl/relocatex.h
+    intl/relocatex.c intl/relocatex.h gcc/config/i386/mingw32.h.sedbak
 
   apply_patch_with_msg \
     0002-Relocate-libintl.patch \
@@ -204,8 +214,11 @@ build() {
   # change hardcoded /mingw prefix to the real prefix .. isn't this rubbish?
   # it might work at build time and could be important there but beyond that?!
   local MINGW_NATIVE_PREFIX=$(cygpath -am ${MINGW_PREFIX}${_include_sub_folder})
-  git restore gcc/config/i386/mingw32.h
-  sed -i "s#\\/mingw\\/#${MINGW_NATIVE_PREFIX//\//\\/}\\/#g" gcc/config/i386/mingw32.h
+  local mingw_gcc_config_file="gcc/config/i386/mingw32.h"
+  if [ -f ${mingw_gcc_config_file}.sedbak ]; then
+    cp -f ${mingw_gcc_config_file}.sedbak ${mingw_gcc_config_file}
+  fi
+  sed --in-place=.sedbak "s#\\/mingw\\/#${MINGW_NATIVE_PREFIX//\//\\/}\\/#g" ${mingw_gcc_config_file}
 
   [[ -d ${srcdir}/build-${MSYSTEM} ]] && rm -rf ${srcdir}/build-${MSYSTEM}
   mkdir -p ${srcdir}/build-${MSYSTEM} && cd ${srcdir}/build-${MSYSTEM}
@@ -331,7 +344,7 @@ build() {
     --with-libiconv \
     --with-system-zlib \
     --with-{gmp,mpfr,mpc,isl}=${MINGW_PREFIX} \
-    --with-pkgversion="Rev${pkgrel} ${MSYSTEM}, Built by stahta01" \
+    --with-pkgversion="GCC with win32 threads for ${MSYSTEM}, built by ${_BUILTBY}" \
     --with-bugurl="$_BUGURL" \
     --with-gnu-as \
     --with-gnu-ld \
@@ -358,8 +371,7 @@ package_gcc-libs-git() {
   pkgdesc="GNU Compiler Collection (libraries) for MinGW-w64"
   depends=("${MINGW_PACKAGE_PREFIX}-gmp"
            "${MINGW_PACKAGE_PREFIX}-mpc"
-           "${MINGW_PACKAGE_PREFIX}-mpfr"
-           "${MINGW_PACKAGE_PREFIX}-libwinpthread")
+           "${MINGW_PACKAGE_PREFIX}-mpfr")
   provides=("${MINGW_PACKAGE_PREFIX}-${_realname}-libs")
   conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}-libs")
 
@@ -412,7 +424,6 @@ package_gcc-git() {
            "${MINGW_PACKAGE_PREFIX}-mpc"
            "${MINGW_PACKAGE_PREFIX}-${_realname}-libs-git=${pkgver}-${pkgrel}"
            "${MINGW_PACKAGE_PREFIX}-windows-default-manifest"
-           "${MINGW_PACKAGE_PREFIX}-winpthreads"
            "${MINGW_PACKAGE_PREFIX}-zlib"
            "${MINGW_PACKAGE_PREFIX}-zstd")
   provides=("${MINGW_PACKAGE_PREFIX}-${_realname}-base"
