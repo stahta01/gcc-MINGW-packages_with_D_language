@@ -27,11 +27,11 @@ _enable_objc=no          # Use no for production
 ### build options not normally changed
 _threads="win32"
 _enable_libquadmath=no   # Use no for production
-_enable_libgomp=yes
+_enable_libgomp=no
 _enable_libatomic=yes
 #
 # =========================================== #
-if [[ "$_enable_threads" != "yes" || "$_threads" != "posix" ]]; then
+if [[ "$_enable_threads" != "yes" ]]; then
   _enable_libgomp=no
   _enable_libatomic=no
 fi
@@ -52,7 +52,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc-git")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit-git")
         )
-pkgver=11.4.1+d20240129.r0.c0.gcdbc0b39e895
+pkgver=11.4.1+d20240203.r0.c0.gcc29ee516df4
 _sourcedir=${_realname}-git
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
