@@ -33,6 +33,7 @@ groups=("${MINGW_PACKAGE_PREFIX}-toolchain")
 depends=("${MINGW_PACKAGE_PREFIX}-headers-git")
 makedepends=("git"
              "${MINGW_PACKAGE_PREFIX}-gcc"
+             "${MINGW_PACKAGE_PREFIX}-autotools"
              "${MINGW_PACKAGE_PREFIX}-binutils")
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}"
           "${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver%%.*}")
