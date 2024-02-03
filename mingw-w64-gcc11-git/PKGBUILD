@@ -369,7 +369,8 @@ build() {
 
 package_gcc-libs-git() {
   pkgdesc="GNU Compiler Collection (libraries) for MinGW-w64"
-  depends=("${MINGW_PACKAGE_PREFIX}-gmp"
+  depends=("${MINGW_PACKAGE_PREFIX}-libwinpthread"    # Needed by libgomp and binutils
+           "${MINGW_PACKAGE_PREFIX}-gmp"
            "${MINGW_PACKAGE_PREFIX}-mpc"
            "${MINGW_PACKAGE_PREFIX}-mpfr")
   provides=("${MINGW_PACKAGE_PREFIX}-${_realname}-libs")
