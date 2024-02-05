@@ -18,6 +18,7 @@ _enable_threads=yes      # Use yes for production
 options=('staticlibs' '!emptydirs') # '!strip' 'debug')
 _BUGURL='https://github.com/stahta01/gcc-MINGW-packages_with_D_language/issues'
 _BUILTBY="stahta01"
+_BUILTTHREADS="with win32 threads"
 ### Language build options
 _enable_ada=yes          # Use yes for production
 _enable_d=yes            # Use yes for production
@@ -344,7 +345,7 @@ build() {
     --with-libiconv \
     --with-system-zlib \
     --with-{gmp,mpfr,mpc,isl}=${MINGW_PREFIX} \
-    --with-pkgversion="GCC with win32 threads for ${MSYSTEM}, built by ${_BUILTBY}" \
+    --with-pkgversion="GCC ${_BUILTTHREADS} for ${MSYSTEM}, built by ${_BUILTBY}" \
     --with-bugurl="$_BUGURL" \
     --with-gnu-as \
     --with-gnu-ld \
