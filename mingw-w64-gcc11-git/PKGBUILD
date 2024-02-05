@@ -32,6 +32,7 @@ _enable_libgomp=no
 _enable_libatomic=yes
 _enable_libgphobos=no
 _enable_onlygdruntime=no
+_git_branch=releases/gcc-11
 #
 # =========================================== #
 if [[ "$_enable_d" == "yes" && "$_enable_threads" == "yes" ]]; then
@@ -61,7 +62,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc-git")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit-git")
         )
-pkgver=11.4.1+d20240205.r0.c0.g015db338b689
+pkgver=11.4.1+d20240205.r0.c1.g015db338b689
 _sourcedir=${_realname}-git
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
@@ -84,7 +85,7 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-${_realname}"
              "${MINGW_PACKAGE_PREFIX}-zlib"
              "${MINGW_PACKAGE_PREFIX}-zstd"
              "${MINGW_PACKAGE_PREFIX}-autotools")
-source=(${_sourcedir}::"git+https://github.com/gcc-mirror/gcc.git#branch=releases/gcc-11"
+source=(${_sourcedir}::"git+https://github.com/gcc-mirror/gcc.git#branch=${_git_branch}"
         "gdbinit"
         0002-Relocate-libintl.patch
         0003-Windows-Follow-Posix-dir-exists-semantics-more-close.patch
@@ -148,14 +149,13 @@ pkgver() {
   cd ${srcdir}/${_sourcedir}
   local _gcc_version=$(head -n 34 gcc/BASE-VER | sed -e 's/.* //' | tr -d '"\n')
   local _gcc_date=$(head -n 34 gcc/DATESTAMP | sed -e 's/.* //' | tr -d '"\n')
-  if [[ -n "${_git_base_commit}" ]]; then
-    printf "%s+d%s.r%s.c%s.g%s" "$_gcc_version" "$_gcc_date" \
-      $(git rev-list --count $(git log -1 --format=%H -- gcc/DATESTAMP)..${_git_base_commit}) \
-      $(git rev-list --count ${_git_base_commit}..HEAD) \
-      $(git rev-parse --short=12 ${_git_base_commit})
-  else
-    printf "%s" ${pkgver}
+  if [[ ! -n "${_git_base_commit}" ]]; then
+    _git_base_commit=$(git rev-parse origin/${_git_branch})
   fi
+  printf "%s+d%s.r%s.c%s.g%s" "$_gcc_version" "$_gcc_date" \
+    $(git rev-list --count $(git log -1 --format=%H -- gcc/DATESTAMP)..${_git_base_commit}) \
+    $(git rev-list --count ${_git_base_commit}..HEAD) \
+    $(git rev-parse --short=12 ${_git_base_commit})
 }
 
 prepare() {
@@ -164,17 +164,22 @@ prepare() {
   _git_base_commit=$(git rev-parse HEAD)
   GIT_AM="git am --committer-date-is-author-date"
 
+  msg "Before git reset"
+  time git reset --hard
   msg "Before git restore"
   time git restore .
   msg "Before git clean"
   time git clean -fdx
+  msg "Before git am abort"
+  time git am --abort || true
 
   del_file_exists intl/canonicalize.c intl/canonicalize.h \
     intl/relocatex.c intl/relocatex.h gcc/config/i386/mingw32.h.sedbak
 
+  ${GIT_AM} ${srcdir}/0003-Windows-Follow-Posix-dir-exists-semantics-more-close.patch
+
   apply_patch_with_msg \
     0002-Relocate-libintl.patch \
-    0003-Windows-Follow-Posix-dir-exists-semantics-more-close.patch \
     0004-Windows-Use-not-in-progpath-and-leave-case-as-is.patch \
     0005-Windows-Don-t-ignore-native-system-header-dir.patch \
     0006-Windows-New-feature-to-allow-overriding.patch \
