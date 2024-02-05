@@ -30,9 +30,17 @@ _threads="win32"
 _enable_libquadmath=no   # Use no for production
 _enable_libgomp=no
 _enable_libatomic=yes
+_enable_libgphobos=no
+_enable_onlygdruntime=no
 #
 # =========================================== #
+if [[ "$_enable_d" == "yes" && "$_enable_threads" == "yes" ]]; then
+  # In GCC 11, libgphobos requires thread support to build
+  _enable_libgphobos=yes
+fi
 if [[ "$_enable_threads" != "yes" ]]; then
+  _BUILTTHREADS="without threads"
+  #_enable_onlygdruntime=yes # yes errors out using 11.4.1+d20240205
   _enable_libgomp=no
   _enable_libatomic=no
 fi
@@ -53,7 +61,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
          $([[ "$_enable_objc" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-objc-git")
          $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit-git")
         )
-pkgver=11.4.1+d20240203.r0.c0.gcc29ee516df4
+pkgver=11.4.1+d20240205.r0.c0.g015db338b689
 _sourcedir=${_realname}-git
 pkgrel=1
 pkgdesc="GCC for the MinGW-w64"
@@ -260,6 +268,15 @@ build() {
   else
     extra_config+=('--enable-libatomic')
   fi
+  #
+  if [[ "$_enable_onlygdruntime" == "yes" && "$_enable_libgphobos" == "yes" ]]; then
+    extra_config+=('--enable-libphobos')
+    extra_config+=('--with-libphobos-druntime-only=yes')
+  elif [[ "$_enable_libgphobos" == "yes" ]]; then
+    extra_config+=('--enable-libphobos')
+  else
+    extra_config+=('--disable-libphobos')
+  fi
 
   case "${CARCH}" in
     i686)
@@ -280,8 +297,6 @@ build() {
   fi
   if [ "$_enable_d" == "yes" ]; then
     _languages+=",d"
-    extra_config+=('--enable-libphobos')
-    #extra_config+=('--with-libphobos-druntime-only=yes')
   fi
   if [ "$_enable_fortran" == "yes" ]; then
     _languages+=",fortran"
@@ -622,13 +637,16 @@ package_gcc-d-git() {
   cp bin/gdc.exe                                              ${pkgdir}${MINGW_PREFIX}/bin/
 
   mkdir -p ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d
-  cp lib/{libgphobos*,libgdruntime*}.a                        ${pkgdir}${MINGW_PREFIX}/lib/
-  cp lib/libgphobos.spec                                      ${pkgdir}${MINGW_PREFIX}/lib/
-  if [[ "$MSYSTEM" == "MINGW32" ]]; then
-    cp lib/drt*.o                                             ${pkgdir}${MINGW_PREFIX}/lib/
-  fi
   cp lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/d21.exe             ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/
-  cp -r lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d        ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/
+  if [[ "$_enable_libgphobos" == "yes" ]]; then
+    cp lib/libgphobos*.a                                      ${pkgdir}${MINGW_PREFIX}/lib/
+    if [[ "$MSYSTEM" == "MINGW32" ]]; then
+      cp lib/drt*.o                                           ${pkgdir}${MINGW_PREFIX}/lib/
+    fi
+    cp lib/libgdruntime*.a                                    ${pkgdir}${MINGW_PREFIX}/lib/
+    cp lib/libgphobos.spec                                    ${pkgdir}${MINGW_PREFIX}/lib/
+    cp -r lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/d      ${pkgdir}${MINGW_PREFIX}/lib/gcc/${MINGW_CHOST}/${pkgver%%+*}/include/
+  fi
 }
 
 package_libgccjit-git() {
