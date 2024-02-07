@@ -2,6 +2,8 @@
 # Based partly on https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-gcc,
 # https://github.com/stahta01/older-gcc-MINGW-packages/tree/main/mingw-w64-gcc11-git, and
 # https://github.com/stahta01/MINGW-mcfg-threads-PACKAGES/tree/main/mingw-w64-gcc
+# See also: https://gcc.gnu.org/install/prerequisites.html and 
+#   https://gcc.gnu.org/gcc-10/changes.html
 ####
 # Maintainer:  Tim Stahlhut
 # Contributor: Alexey Pavlov
@@ -289,6 +291,7 @@ build() {
   if [[ "$_enable_onlygdruntime" == "yes" && "$_enable_libgphobos" == "yes" ]]; then
     extra_config+=('--enable-libphobos')
     extra_config+=('--with-libphobos-druntime-only=yes')
+    extra_config+=('--disable-libphobos-checking')
   elif [[ "$_enable_libgphobos" == "yes" ]]; then
     extra_config+=('--enable-libphobos')
   else
