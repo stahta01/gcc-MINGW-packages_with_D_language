@@ -75,6 +75,7 @@ mingw_arch=('mingw32' 'mingw64' 'ucrt64')
 groups=("${MINGW_PACKAGE_PREFIX}-toolchain")
 makedepends=("${MINGW_PACKAGE_PREFIX}-${_realname}"
              $([[ "$_enable_ada" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-ada")
+             $([[ "$_enable_d" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-${_realname}-d")
              "${MINGW_PACKAGE_PREFIX}-binutils"
              "${MINGW_PACKAGE_PREFIX}-crt"
              "${MINGW_PACKAGE_PREFIX}-headers"
