@@ -68,7 +68,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-git"
 pkgdesc="GCC for the MinGW-w64"
 url="https://gcc.gnu.org"
 license=('spdx:GPL-3.0-or-later')
-pkgver=14.0.1+d20240207.r8.c0.g830d4659604e
+pkgver=14.0.1+d20240209.r12.c0.gf29f7f86935e
 pkgrel=1
 _git_branch=master
 _sourcedir=${_realname}-git
@@ -90,7 +90,8 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-${_realname}"
              "${MINGW_PACKAGE_PREFIX}-zlib"
              "${MINGW_PACKAGE_PREFIX}-zstd"
              "${MINGW_PACKAGE_PREFIX}-gperf"
-             "${MINGW_PACKAGE_PREFIX}-autotools")
+             "${MINGW_PACKAGE_PREFIX}-autotools"
+             "${MINGW_PACKAGE_PREFIX}-winpthreads")
 source=(${_sourcedir}::"git+https://github.com/gcc-mirror/gcc.git#branch=${_git_branch}"
         "gdbinit"
         0002-Relocate-libintl.patch
@@ -349,6 +350,14 @@ build() {
 
   # In addition adaint.c does `#include <accctrl.h>` which pulls in msxml.h, hacky hack:
   CPPFLAGS+=" -DCOM_NO_WINDOWS_H"
+
+  echo ""
+  echo "CC [gcc] := ${CC-gcc}"
+  ${CC-gcc} --version | head -1
+  pacman -Q ${MINGW_PACKAGE_PREFIX}-headers
+  pacman -Q ${MINGW_PACKAGE_PREFIX}-crt
+  pacman -Q ${MINGW_PACKAGE_PREFIX}-cc
+  echo ""
 
   ../${_sourcedir}/configure \
     --prefix=${MINGW_PREFIX} \
