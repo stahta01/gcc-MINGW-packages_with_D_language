@@ -240,6 +240,9 @@ prepare() {
 build() {
   cd ${srcdir}/${_sourcedir}
 
+  export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+  echo "SOURCE_DATE_EPOCH := $SOURCE_DATE_EPOCH"
+
   # change hardcoded /mingw prefix to the real prefix .. isn't this rubbish?
   # it might work at build time and could be important there but beyond that?!
   local MINGW_NATIVE_PREFIX=$(cygpath -am ${MINGW_PREFIX}${_include_sub_folder})
