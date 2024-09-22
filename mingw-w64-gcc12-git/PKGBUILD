@@ -15,7 +15,7 @@
 _include_sub_folder=       #/${MINGW_CHOST}
 _enable_bootstrap=no    # Use yes for production
 _enable_threads=yes      # Use yes for production
-options=('staticlibs' '!emptydirs') # '!strip' 'debug')
+options=('staticlibs' '!emptydirs' '!strip' 'debug')
 _BUGURL='https://github.com/stahta01/gcc-MINGW-packages_with_D_language/issues'
 _BUILTBY="stahta01"
 _BUILTTHREADS="with win32 threads"
